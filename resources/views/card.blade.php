@@ -55,8 +55,9 @@
         $(()=>{
 
             @if(session()->has('msg'))
-            alert( '{{ session()->get('msg')}}' );
+                alert( '{{ session()->get('msg')}}' );
             @endif
+
             cardSelect = setting();
             const text = onText();
             $('.list').html(text);

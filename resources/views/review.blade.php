@@ -6,6 +6,7 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="{{asset('./resources/css/bootstrap.css')}}">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-modal/2.2.6/js/bootstrap-modalmanager.min.js"></script>
@@ -23,10 +24,56 @@
         })
         .on('click','.view_modal',function(){
             const id = $(this).attr('data-idx');
-            $.ajax({
-                url:'/review/'
-            })
         })
+        .on('click','.add_photo',function(){
+            const text = `<input type="file" name="file" class="form-control file_input" accept=".jpg">`;
+            $('.file_div').append(text);
+        })
+        .on('change','#file',function(e){
+            const img = readFile(e.target.files[0]);
+            const canvas = showImg(img);
+            console.log(canvas);
+        })
+
+        const imgCanvas = (img) => {
+            const canvas = $('canvas')[0];
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img,0,0,img.width,img.height);
+            ctx.font = '48px serif';
+            ctx.fillText('경상남도 특산품');
+            return canvas.toDataURL();
+        }
+
+        const showImg = async () => {
+            const {handle,reader} = await filePick();
+            const img = new Image();
+            img.onload = () => {
+                imgCanvas(img);
+            }
+            img.src = reader.result;
+        }
+
+        const filePick = async () => {
+            const [handle] = await window.showOpenFilePicker();
+            const getFile = await handle.getFile();
+            const reader = await readFile(getFile);
+
+            return {handle,reader}
+        }
+
+        const readFile = (file) => {
+            return new Promise((res) => {
+                const reader = new FileReader()
+                reader.onload = () => {
+                      res(reader);
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+
+
     </script>
     <style>
 
@@ -59,12 +106,11 @@
 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#staticBackdrop" onclick="openModal(this)">
     구매후기 작성
 </button>
-
 <!-- Modal -->
 <div class="modal" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{route('review.store')}}" method="POST">
+            <form action="{{route('review.store')}}" method="POST" enctype="multipart/form-data">
                 @csrf
             <div class="modal-header">
                 <h5 class="modal-title" id="staticBackdropLabel">Modal title</h5>
@@ -75,7 +121,7 @@
             <div class="modal-body">
                 <div class="form-group">
                     <p>이름</p>
-                    <input type="text" name="name" class="form-control">
+                    <input type="text" name="name" class="form-control name_input">
                 </div>
                 <div class="form-group">
                     <p>구매품</p>
@@ -104,13 +150,14 @@
                     <textarea type="text" name="contents" class="form-control">
                     </textarea>
                 </div>
-                <div class="form-group">
-                    <input type="file" name="file" class="form-control" >
+                <div class="form-group file_div">
+                    <input type="file" name="file" class="form-control file_input" accept=".jpg" id="file">
                 </div>
+                <div><button type="button" class="btn btn-primary add_photo">사진 추가하기</button></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeModal()">Close</button>
-                <button type="submit" class="btn btn-primary">Understood</button>
+                <button type="submit" class="btn btn-primary file">후기 등록</button>
             </div>
             </form>
         </div>
